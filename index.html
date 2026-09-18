@@ -3,132 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Машина Оюну - Акча табуу</title>
+    <title>Shadow Fight 2D Стиль</title>
     <style>
         body {
             margin: 0;
-            background: #222;
+            background: #111;
             color: white;
             font-family: Arial, sans-serif;
             text-align: center;
             overflow: hidden;
         }
         canvas {
-            background: #333;
+            background: linear-gradient(to bottom, #222, #000);
             display: block;
             margin: 10px auto;
-            border: 2px solid #555;
+            border: 2px solid #444;
         }
         .ui {
-            font-size: 18px;
+            font-size: 16px;
             margin: 5px;
         }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
         button {
-            padding: 10px 20px;
+            padding: 12px 20px;
             font-size: 16px;
-            background: #ff9800;
-            border: none;
+            background: #444;
+            border: 1px solid #777;
             color: white;
             border-radius: 5px;
             touch-action: manipulation;
+        }
+        button:active {
+            background: #ff5722;
         }
     </style>
 </head>
 <body>
 
     <div class="ui">
-        Акча: $<span id="money">0</span> | Машина: <span id="carLevel">Стандарт</span>
+        Жашооңуз: <span id="playerHp" style="color: #00ff00;">100</span> | Душман: <span id="enemyHp" style="color: #ff0000;">100</span>
     </div>
-    
-    <canvas id="gameCanvas" width="360" height="480"></canvas>
 
-    <div>
-        <button onclick="moveLeft()">СОЛГО ⬅️</button>
-        <button onclick="moveRight()">ОҢГО ➡️</button>
-        <br><br>
-        <button onclick="buyUpgrade()">Машинаны жаңыртуу ($100)</button>
+    <canvas id="gameCanvas" width="360" height="300"></canvas>
+
+    <div class="controls">
+        <button onclick="playerAttack()">УРУУ 👊</button>
+        <button onclick="playerKick()">ТЕПКҮҮ 🦵</button>
+    </div>
+    <div class="controls" style="margin-top: 8px;">
+        <button onclick="movePlayer(-20)">⬅️ Жылүү</button>
+        <button onclick="movePlayer(20)">Жылүү ➡️</button>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        let money = 0;
-        let carX = 160;
-        let carLevel = 1;
-        let coinY = -50;
-        let coinX = Math.random() * 320;
-        let speed = 3;
-
-        function update() {
-            // Монетанын түшүүсү
-            coinY += speed;
-            if (coinY > canvas.height) {
-                coinY = -50;
-                coinX = Math.random() * 320;
-            }
-
-            // Кагылышууну текшерүү (Сакталып калса акча кошулат)
-            if (coinY > 380 && coinY < 440 && coinX > carX - 20 && coinX < carX + 40) {
-                money += 10 * carLevel;
-                coinY = -50;
-                coinX = Math.random() * 320;
-                document.getElementById("money").innerText = money;
-            }
-        }
+        let player = { x: 80, y: 210, width: 30, height: 70, hp: 100 };
+        let enemy = { x: 260, y: 210, width: 30, height: 70, hp: 100 };
+        let gameState = "Оюн жүрүүдө...";
 
         function draw() {
-            // Экранды тазалоо (Жол)
-            ctx.fillStyle = "#444";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Фонду тазалоо (Арена)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Жолдун сызыктары
-            ctx.strokeStyle = "#fff";
-            ctx.setLineDash([20, 20]);
+            // Жер сызыгы
+            ctx.strokeStyle = "#555";
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.moveTo(180, 0);
-            ctx.lineTo(180, canvas.height);
+            ctx.moveTo(0, 280);
+            ctx.lineTo(canvas.width, 280);
             ctx.stroke();
-            ctx.setLineDash([]);
 
-            // Машинаны тартуу (Жөнөкөй блок формасында)
-            ctx.fillStyle = carLevel === 1 ? "red" : (carLevel === 2 ? "blue" : "gold");
-            ctx.fillRect(carX, 400, 40, 60);
-
-            // Монетаны тартуу
-            ctx.fillStyle = "yellow";
+            // Оюнчу (Кара көлөкө стили - Shadow style)
+            ctx.fillStyle = "#fff";
+            // Башы
             ctx.beginPath();
-            ctx.arc(coinX + 10, coinY + 10, 12, 0, Math.PI * 2);
+            ctx.arc(player.x + 15, player.y - 10, 10, 0, Math.PI * 2);
             ctx.fill();
+            // Денеси жана буттары
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Душман (Кызыл көлөкө стили)
+            ctx.fillStyle = "#ff4444";
+            ctx.beginPath();
+            ctx.arc(enemy.x + 15, enemy.y - 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+            // Статус жазуу
+            ctx.fillStyle = "yellow";
+            ctx.font = "14px Arial";
+            ctx.fillText(gameState, 120, 30);
         }
 
-        function loop() {
-            update();
+        function movePlayer(step) {
+            player.x += step;
+            if (player.x < 10) player.x = 10;
+            if (player.x > enemy.x - 30) player.x = enemy.x - 30;
             draw();
-            requestAnimationFrame(loop);
         }
 
-        function moveLeft() {
-            if (carX > 20) carX -= 30;
-        }
+        function playerAttack() {
+            if (player.hp <= 0 || enemy.hp <= 0) return;
 
-        function moveRight() {
-            if (carX < canvas.width - 60) carX += 30;
-        }
-
-        function buyUpgrade() {
-            if (money >= 100 * carLevel) {
-                money -= 100 * carLevel;
-                carLevel++;
-                speed += 1.5;
-                document.getElementById("money").innerText = money;
-                document.getElementById("carLevel").innerText = "Тюнинг " + carLevel;
+            // Кол жетсе сокку тийет
+            if (Math.abs(player.x - enemy.x) < 55) {
+                enemy.hp -= 10;
+                document.getElementById("enemyHp").innerText = enemy.hp;
+                gameState = "Сокку тийди! (-10)";
             } else {
-                alert("Акчаңыз жетпейт!");
+                gameState = "Алыссыз! Жакын келиңиз.";
+            }
+
+            checkWin();
+            draw();
+            setTimeout(enemyTurn, 600);
+        }
+
+        function playerKick() {
+            if (player.hp <= 0 || enemy.hp <= 0) return;
+
+            if (Math.abs(player.x - enemy.x) < 55) {
+                enemy.hp -= 18;
+                document.getElementById("enemyHp").innerText = Math.max(0, enemy.hp);
+                gameState = "Күчтүү тепки! (-18)";
+            } else {
+                gameState = "Тепки жетпеди!";
+            }
+
+            checkWin();
+            draw();
+            setTimeout(enemyTurn, 600);
+        }
+
+        function enemyTurn() {
+            if (enemy.hp <= 0) return;
+            
+            // Душмандын жооп соккусу
+            player.hp -= 10;
+            document.getElementById("playerHp").innerText = Math.max(0, player.hp);
+            gameState = "Душман сокку урду! (-10)";
+
+            checkWin();
+            draw();
+        }
+
+        function checkWin() {
+            if (enemy.hp <= 0) {
+                gameState = "Сиз жеңдиниз! 🎉";
+            } else if (player.hp <= 0) {
+                gameState = "Жеңилдиңиз! 😢";
             }
         }
 
-        loop();
+        draw();
     </script>
 </body>
 </html>
