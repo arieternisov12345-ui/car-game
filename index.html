@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шпион — Игра для компании</title>
+    <title>Шпион и Детектив — Игра для компании</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -13,6 +13,7 @@
             --accent: #ec4899;
             --danger: #ef4444;
             --success: #22c55e;
+            --warning: #f59e0b;
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
@@ -177,15 +178,15 @@
             font-weight: 500;
         }
 
-        .settings-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .settings-info {
             background: rgba(15, 23, 42, 0.6);
             padding: 12px 16px;
             border-radius: 12px;
             border: 1px solid var(--border);
             margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
         }
 
         .pass-card {
@@ -205,7 +206,7 @@
 
         .role-box {
             text-align: center;
-            padding: 40px 16px;
+            padding: 30px 16px;
             background: rgba(15, 23, 42, 0.8);
             border-radius: 16px;
             border: 2px solid var(--primary);
@@ -221,13 +222,17 @@
         }
 
         .role-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 800;
             margin-bottom: 12px;
         }
 
         .role-value.spy {
             color: var(--danger);
+        }
+
+        .role-value.detective {
+            color: var(--warning);
         }
 
         .role-value.citizen {
@@ -248,7 +253,6 @@
             gap: 10px;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -263,7 +267,7 @@
 <div class="container">
     <!-- ЭКРАН 1: НАСТРОЙКА ИГРОКОВ -->
     <div id="setup-screen" class="screen active">
-        <h1>Шпион</h1>
+        <h1>Шпион и Детектив</h1>
         <p class="subtitle">Игра для компании</p>
 
         <div class="form-group">
@@ -275,15 +279,11 @@
         </div>
 
         <div class="players-list" id="players-list">
-            <!-- Список игроков будет добавляться динамически -->
+            <!-- Список игроков -->
         </div>
 
-        <div class="settings-row">
-            <label style="margin:0">Количество шпионов</label>
-            <select id="spy-count" style="width: 80px; padding: 8px;">
-                <option value="1">1</option>
-                <option value="2">2</option>
-            </select>
+        <div class="settings-info">
+            Роли в игре: <b>1 Шпион</b>, <b>1 Детектив</b> и <b>Мирные жители</b>.
         </div>
 
         <button class="btn-primary" id="start-game-btn">Начать игру</button>
@@ -303,9 +303,9 @@
     <div id="role-screen" class="screen">
         <h1>Ваша роль</h1>
         <div class="role-box">
-            <div class="role-title">Локация / Роль</div>
+            <div class="role-title">Информация</div>
             <div id="role-value" class="role-value"></div>
-            <p id="role-desc" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+            <p id="role-desc" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;"></p>
         </div>
         <button class="btn-primary" id="hide-role-btn">Скрыть и передать дальше</button>
     </div>
@@ -324,12 +324,11 @@
 <script>
     const locations = [
         "Банк", "Пляж", "Школа", "Больница", "Ресторан", 
-        "Космолет", "Полиция", "Супермаркет", "Пять звезд отель", 
+        "Космолет", "Полиция", "Супермаркет", "Отель 5 звезд", 
         "Киностудия", "Пиратский корабль", "Поезд"
     ];
 
     let players = [];
-    let spyCountInput = document.getElementById('spy-count');
     let currentPlayerIndex = 0;
     let rolesAssigned = [];
     let gameTimer = null;
@@ -386,36 +385,33 @@
         renderPlayers();
     }
 
-    // Старт игры
+    // Старт игры (нужно минимум 4 игрока, так как у нас Шпион + Детектив + минимум 2 мирных)
     startGameBtn.addEventListener('click', () => {
-        if (players.length < 3) {
-            alert('Нужно минимум 3 игрока!');
+        if (players.length < 4) {
+            alert('Для игры с Шпионом и Детективом нужно минимум 4 игрока!');
             return;
         }
 
-        const spiesNum = parseInt(spyCountInput.value);
-        if (spiesNum >= players.length) {
-            alert('Шпионов не может быть больше или равно числу игроков!');
-            return;
-        }
-
-        generateRoles(spiesNum);
+        generateRoles();
         currentPlayerIndex = 0;
         showPassScreen();
     });
 
-    function generateRoles(numSpies) {
+    function generateRoles() {
         const secretLocation = locations[Math.floor(Math.random() * locations.length)];
         rolesAssigned = new Array(players.length).fill(secretLocation);
 
-        let assigned = 0;
-        while (assigned < numSpies) {
-            let randomIndex = Math.floor(Math.random() * players.length);
-            if (rolesAssigned[randomIndex] !== 'Шпион') {
-                rolesAssigned[randomIndex] = 'Шпион';
-                assigned++;
-            }
-        }
+        // Назначение 1 шпиона
+        let spyIndex = Math.floor(Math.random() * players.length);
+        rolesAssigned[spyIndex] = 'Шпион';
+
+        // Назначение 1 детектива (ищем другой индекс, чтобы не совпало со шпионом)
+        let detectiveIndex;
+        do {
+            detectiveIndex = Math.floor(Math.random() * players.length);
+        } while (detectiveIndex === spyIndex);
+
+        rolesAssigned[detectiveIndex] = 'Детектив';
     }
 
     function switchScreen(screen) {
@@ -434,14 +430,19 @@
 
     showRoleBtn.addEventListener('click', () => {
         const role = rolesAssigned[currentPlayerIndex];
+        
         if (role === 'Шпион') {
             roleValue.textContent = 'ШПИОН';
             roleValue.className = 'role-value spy';
-            roleDesc.textContent = 'Вы не знаете локацию. Попытайтесь не выдать себя!';
+            roleDesc.textContent = 'Вы не знаете локацию. Попытайтесь не выдать себя и угадать её!';
+        } else if (role === 'Детектив') {
+            roleValue.textContent = 'ДЕТЕКТИВ';
+            roleValue.className = 'role-value detective';
+            roleDesc.textContent = 'Вы знаете локацию, но ваша цель — внимательно следить за игроками и вычислить Шпиона.';
         } else {
             roleValue.textContent = role;
             roleValue.className = 'role-value citizen';
-            roleDesc.textContent = 'Локация засекречена. Найдите шпиона среди игроков.';
+            roleDesc.textContent = 'Локация засекречена. Задавайте вопросы и найдите шпиона.';
         }
         switchScreen(roleScreen);
     });
@@ -483,4 +484,4 @@
 </script>
 
 </body>
-</html>
+</html>        
