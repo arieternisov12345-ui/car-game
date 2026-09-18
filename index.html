@@ -1,25 +1,134 @@
-local Players = game:GetService("Players")
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Машина Оюну - Акча табуу</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            overflow: hidden;
+        }
+        canvas {
+            background: #333;
+            display: block;
+            margin: 10px auto;
+            border: 2px solid #555;
+        }
+        .ui {
+            font-size: 18px;
+            margin: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #ff9800;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
 
-Players.PlayerAdded:Connect(function(player)
- local stats = Instance.new("Folder")
- stats.Name = "leaderstats"
- stats.Parent = player
+    <div class="ui">
+        Акча: $<span id="money">0</span> | Машина: <span id="carLevel">Стандарт</span>
+    </div>
+    
+    <canvas id="gameCanvas" width="360" height="480"></canvas>
 
- local money = Instance.new("IntValue")
- money.Name = "Money"
- money.Value = 0
- money.Parent = stats
-end)
+    <div>
+        <button onclick="moveLeft()">СОЛГО ⬅️</button>
+        <button onclick="moveRight()">ОҢГО ➡️</button>
+        <br><br>
+        <button onclick="buyUpgrade()">Машинаны жаңыртуу ($100)</button>
+    </div>
 
-while true do
- task.wait(10)
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
- for _, player in pairs(Players:GetPlayers()) do
-  local stats = player:FindFirstChild("leaderstats")
-  local money = stats and stats:FindFirstChild("Money")
+        let money = 0;
+        let carX = 160;
+        let carLevel = 1;
+        let coinY = -50;
+        let coinX = Math.random() * 320;
+        let speed = 3;
 
-  if money then
-   money.Value += 100
-  end
- end
-end
+        function update() {
+            // Монетанын түшүүсү
+            coinY += speed;
+            if (coinY > canvas.height) {
+                coinY = -50;
+                coinX = Math.random() * 320;
+            }
+
+            // Кагылышууну текшерүү (Сакталып калса акча кошулат)
+            if (coinY > 380 && coinY < 440 && coinX > carX - 20 && coinX < carX + 40) {
+                money += 10 * carLevel;
+                coinY = -50;
+                coinX = Math.random() * 320;
+                document.getElementById("money").innerText = money;
+            }
+        }
+
+        function draw() {
+            // Экранды тазалоо (Жол)
+            ctx.fillStyle = "#444";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Жолдун сызыктары
+            ctx.strokeStyle = "#fff";
+            ctx.setLineDash([20, 20]);
+            ctx.beginPath();
+            ctx.moveTo(180, 0);
+            ctx.lineTo(180, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Машинаны тартуу (Жөнөкөй блок формасында)
+            ctx.fillStyle = carLevel === 1 ? "red" : (carLevel === 2 ? "blue" : "gold");
+            ctx.fillRect(carX, 400, 40, 60);
+
+            // Монетаны тартуу
+            ctx.fillStyle = "yellow";
+            ctx.beginPath();
+            ctx.arc(coinX + 10, coinY + 10, 12, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function moveLeft() {
+            if (carX > 20) carX -= 30;
+        }
+
+        function moveRight() {
+            if (carX < canvas.width - 60) carX += 30;
+        }
+
+        function buyUpgrade() {
+            if (money >= 100 * carLevel) {
+                money -= 100 * carLevel;
+                carLevel++;
+                speed += 1.5;
+                document.getElementById("money").innerText = money;
+                document.getElementById("carLevel").innerText = "Тюнинг " + carLevel;
+            } else {
+                alert("Акчаңыз жетпейт!");
+            }
+        }
+
+        loop();
+    </script>
+</body>
+</html>
