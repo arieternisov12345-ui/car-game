@@ -1,285 +1,70 @@
-// packages/server/index.js
+const playerCars = new Map();
 
-const players = new Map();
-const vehicles = new Map();
+mp.events.addCommand("car", (player, fullText) => {
+    // Мисал: /car sultan
+    const model = fullText && fullText.trim()
+        ? fullText.trim()
+        : "sultan";
 
-const ADMIN_LEVEL = 5;
+    // Эски машинаны өчүрүү
+    const oldCar = playerCars.get(player.id);
 
-function getData(player) {
-    if (!players.has(player.id)) {
-        players.set(player.id, {
-            password: "",
-            money: 5000,
-            bank: 10000,
-            level: 1,
-            job: "Безработный",
-            faction: "Нет",
-            factionRank: 0,
-            admin: 0,
-            inventory: []
-        });
+    if (oldCar && mp.vehicles.exists(oldCar)) {
+        oldCar.destroy();
     }
 
-    return players.get(player.id);
-}
+    // Оюнчунун алдына чыгаруу
+    const pos = player.position;
 
-function msg(player, text) {
-    player.outputChatBox(`!{FFFFFF}[RP] ${text}`);
-}
-
-mp.events.add("playerReady", (player) => {
-    const data = getData(player);
-
-    player.health = 100;
-    player.armour = 0;
-
-    msg(player, `Кош келдиң, ${player.name}!`);
-    msg(player, `Акча: $${data.money} | Банк: $${data.bank}`);
-    msg(player, `F1 — RP меню`);
-});
-
-mp.events.add("playerQuit", (player) => {
-    players.delete(player.id);
-});
-
-/* =========================
-   КОМАНДАЛАР
-========================= */
-
-mp.events.addCommand("help", (player) => {
-    msg(player, "/me /stats /job /inventory /bank /car /faction");
-});
-
-mp.events.addCommand("stats", (player) => {
-    const d = getData(player);
-
-    msg(
-        player,
-        `Level: ${d.level} | Cash: $${d.money} | Bank: $${d.bank}`
-    );
-
-    msg(
-        player,
-        `Job: ${d.job} | Faction: ${d.faction}`
-    );
-});
-
-mp.events.addCommand("job", (player) => {
-    const d = getData(player);
-
-    d.job = "Таксист";
-
-    msg(player, "Сен эми Таксист болуп иштейсиң.");
-});
-
-mp.events.addCommand("inventory", (player) => {
-    const d = getData(player);
-
-    if (d.inventory.length === 0) {
-        msg(player, "Инвентарь бош.");
-        return;
-    }
-
-    msg(player, `Инвентарь: ${d.inventory.join(", ")}`);
-});
-
-mp.events.addCommand("bank", (player) => {
-    const d = getData(player);
-
-    msg(player, `Банктагы акчаң: $${d.bank}`);
-});
-
-mp.events.addCommand("me", (player, fullText) => {
-    msg(player, `* ${player.name} ${fullText}`);
-});
-
-/* =========================
-   АКЧА
-========================= */
-
-mp.events.addCommand("givecash", (player, fullText) => {
-    const amount = Number(fullText);
-
-    if (!amount || amount <= 0) {
-        msg(player, "Мисал: /givecash 1000");
-        return;
-    }
-
-    const d = getData(player);
-
-    d.money += amount;
-
-    msg(player, `Сага $${amount} берилди.`);
-});
-
-/* =========================
-   УНАА
-========================= */
-
-mp.events.addCommand("car", (player) => {
     const vehicle = mp.vehicles.new(
-        mp.joaat("sultan"),
+        mp.joaat(model),
         new mp.Vector3(
-            player.position.x + 3,
-            player.position.y,
-            player.position.z
-        )
+            pos.x + 3,
+            pos.y,
+            pos.z
+        ),
+        {
+            heading: player.heading,
+            numberPlate: "RPRP"
+        }
     );
 
-    vehicle.numberPlate = "RPRP";
+    playerCars.set(player.id, vehicle);
 
-    vehicles.set(player.id, vehicle);
-
+    // Машинага отургузуу
     player.putIntoVehicle(vehicle, 0);
 
-    msg(player, "Sultan чыгарылды.");
+    player.outputChatBox(
+        `!{00FF00}Машина чыгарылды: ${model}`
+    );
 });
 
+// Машинаны өчүрүү
 mp.events.addCommand("delcar", (player) => {
-    const vehicle = vehicles.get(player.id);
+    const vehicle = playerCars.get(player.id);
 
-    if (!vehicle) {
-        msg(player, "Сенде унаа жок.");
+    if (!vehicle || !mp.vehicles.exists(vehicle)) {
+        player.outputChatBox(
+            "!{FF0000}Сенде машина жок."
+        );
         return;
     }
 
     vehicle.destroy();
-    vehicles.delete(player.id);
+    playerCars.delete(player.id);
 
-    msg(player, "Унаа өчүрүлдү.");
+    player.outputChatBox(
+        "!{00FF00}Машина өчүрүлдү."
+    );
 });
 
-/* =========================
-   ФРАКЦИЯ
-========================= */
+// Оюнчу чыкканда машинаны өчүрүү
+mp.events.add("playerQuit", (player) => {
+    const vehicle = playerCars.get(player.id);
 
-mp.events.addCommand("faction", (player, fullText) => {
-    const d = getData(player);
-
-    if (!fullText) {
-        msg(player, `Фракция: ${d.faction}`);
-        return;
+    if (vehicle && mp.vehicles.exists(vehicle)) {
+        vehicle.destroy();
     }
 
-    d.faction = fullText;
-    d.factionRank = 1;
-
-    msg(player, `Сен ${fullText} фракциясына кирдиң.`);
+    playerCars.delete(player.id);
 });
-
-/* =========================
-   АДМИН
-========================= */
-
-mp.events.addCommand("setadmin", (player, fullText) => {
-    const targetId = Number(fullText);
-
-    if (getData(player).admin < ADMIN_LEVEL) {
-        msg(player, "Сага уруксат жок.");
-        return;
-    }
-
-    const target = mp.players.at(targetId);
-
-    if (!target) {
-        msg(player, "Оюнчу табылган жок.");
-        return;
-    }
-
-    getData(target).admin = 1;
-
-    msg(target, "Сага Admin статусу берилди.");
-    msg(player, `${target.name} admin болду.`);
-});
-
-mp.events.addCommand("heal", (player) => {
-    if (getData(player).admin < 1) {
-        msg(player, "Сага уруксат жок.");
-        return;
-    }
-
-    player.health = 100;
-
-    msg(player, "HP толтурулду.");
-});
-
-mp.events.addCommand("armor", (player) => {
-    if (getData(player).admin < 1) {
-        msg(player, "Сага уруксат жок.");
-        return;
-    }
-
-    player.armour = 100;
-
-    msg(player, "Броня берилди.");
-});
-
-/* =========================
-   F1 МЕНЮ
-========================= */
-
-mp.events.add("rpMenuAction", (player, action) => {
-    const d = getData(player);
-
-    switch (action) {
-
-        case "stats":
-            msg(
-                player,
-                `Level: ${d.level} | Cash: $${d.money} | Bank: $${d.bank}`
-            );
-            break;
-
-        case "inventory":
-            msg(
-                player,
-                d.inventory.length
-                    ? d.inventory.join(", ")
-                    : "Инвентарь бош."
-            );
-            break;
-
-        case "job":
-            d.job = "Таксист";
-            msg(player, "Таксист жумушуна кирдиң.");
-            break;
-
-        case "heal":
-            player.health = 100;
-            msg(player, "HP 100%.");
-            break;
-
-        case "armor":
-            player.armour = 100;
-            msg(player, "Броня 100%.");
-            break;
-
-        case "car":
-
-            const vehicle = mp.vehicles.new(
-                mp.joaat("sultan"),
-                new mp.Vector3(
-                    player.position.x + 3,
-                    player.position.y,
-                    player.position.z
-                )
-            );
-
-            vehicle.numberPlate = "RPRP";
-
-            vehicles.set(player.id, vehicle);
-
-            player.putIntoVehicle(vehicle, 0);
-
-            msg(player, "Унаа чыгарылды.");
-            break;
-
-        default:
-            msg(player, "Белгисиз меню функциясы.");
-    }
-});
-
-console.log("================================");
-console.log("       GTA RP SERVER STARTED");
-console.log("================================");
-        
