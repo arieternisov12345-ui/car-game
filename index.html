@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Game - Уличный Гонщик</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 10px 0;
+            font-size: 20px;
+            color: #00ffcc;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 80vh;
+            background: #222;
+            overflow: hidden;
+            border-top: 2px solid #444;
+            border-bottom: 2px solid #444;
+        }
+        canvas {
+            background: #333;
+            display: block;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #00ffcc;
+            border: none;
+            border-radius: 8px;
+            color: #111;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,255,204,0.3);
+        }
+        button:active {
+            background: #00b386;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚗 Уличный Гонщик: Car Game</h1>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="360" height="500"></canvas>
+    </div>
+    <div class="controls">
+        <button onclick="moveLeft()">◀ СОЛГО</button>
+        <button onclick="moveRight()">ОҢГО ▶</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let carX = 155;
+        let carY = 400;
+        const carWidth = 50;
+        const carHeight = 90;
+
+        let obstacles = [];
+        let score = 0;
+        let isGameOver = false;
+
+        function moveLeft() {
+            if (carX > 30) carX -= 50;
+        }
+
+        function moveRight() {
+            if (carX < 280) carX += 50;
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            // Жол сызыктарын же башка нерселерди жаңыртуу
+            if (Math.random() < 0.03) {
+                let lanes = [30, 80, 130, 180, 230, 280];
+                let randomLane = lanes[Math.floor(Math.random() * lanes.length)];
+                obstacles.push({ x: randomLane, y: -100, width: 50, height: 90 });
+            }
+
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].y += 4;
+
+                // Кагылышууну текшерүү (Авария)
+                if (
+                    carX < obstacles[i].x + obstacles[i].width &&
+                    carX + carWidth > obstacles[i].x &&
+                    carY < obstacles[i].y + obstacles[i].height &&
+                    carY + carHeight > obstacles[i].y
+                ) {
+                    isGameOver = true;
+                }
+            }
+
+            // Өтүп кеткен машиналарды өчүрүү
+            obstacles = obstacles.filter(obs => obs.y < 600);
+            if (!isGameOver) score++;
+        }
+
+        function draw() {
+            // Жол фон түсү
+            ctx.fillStyle = "#444";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Жолдун ортосундагы сызыктар
+            ctx.strokeStyle = "#fff";
+            ctx.setLineDash([20, 20]);
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(120, 0); ctx.lineTo(120, canvas.height);
+            ctx.moveTo(240, 0); ctx.lineTo(240, canvas.height);
+            ctx.stroke();
+
+            // Душман машиналар (Кызыл)
+            ctx.fillStyle = "#ff3333";
+            for (let i = 0; i < obstacles.length; i++) {
+                ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+            }
+
+            // Оюнчунун машинагы (Көк/Жашыл)
+            ctx.fillStyle = "#00ffcc";
+            ctx.fillRect(carX, carY, carWidth, carHeight);
+
+            // Окуу/Упай
+            ctx.fillStyle = "#fff";
+            ctx.font = "16px Arial";
+            ctx.fillText("Упай: " + score, 20, 30);
+
+            if (isGameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ff3333";
+                ctx.font = "28px Arial";
+                ctx.fillText("ОЮН БҮТТҮ!", 90, 230);
+                ctx.fillStyle = "#fff";
+                ctx.font = "16px Arial";
+                ctx.fillText("Кайра баштоо үчүн бетти жаңыртыңыз", 45, 270);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            if (!isGameOver) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        loop();
+    </script>
+</body>
+</html>
