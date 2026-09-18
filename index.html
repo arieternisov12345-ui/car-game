@@ -1,223 +1,486 @@
-import 'package:flutter/material.dart';
-import 'dart:math';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шпион — Игра для компании</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #ec4899;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
 
-void main() {
-  runApp(MyApp());
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Шпион',
-      theme: ThemeData.dark(),
-      home: SetupScreen(),
-    );
-  }
-}
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
 
-// 1. Экран настройки игроков
-class SetupScreen extends StatefulWidget {
-  @override
-  _SetupScreenState createState() => _SetupScreenState();
-}
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
 
-class _SetupScreenState extends State<SetupScreen> {
-  final TextEditingController _nameController = TextEditingController();
-  final List<String> _players = [];
-  int _spyCount = 1;
+        h1 {
+            font-size: 1.75rem;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #818cf8, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-  void _addPlayer() {
-    if (_nameController.text.trim().isNotEmpty) {
-      setState(() {
-        _players.add(_nameController.text.trim());
-        _nameController.clear();
-      });
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-icon {
+            background: var(--primary);
+            color: white;
+            padding: 0 16px;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .players-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin: 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+
+        .player-name {
+            font-weight: 500;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .pass-card {
+            text-align: center;
+            padding: 30px 10px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 16px;
+            border: 1px dashed var(--border);
+            margin: 20px 0;
+        }
+
+        .pass-card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+
+        .role-box {
+            text-align: center;
+            padding: 40px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            border: 2px solid var(--primary);
+            margin: 20px 0;
+        }
+
+        .role-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .role-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .role-value.spy {
+            color: var(--danger);
+        }
+
+        .role-value.citizen {
+            color: var(--success);
+        }
+
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ЭКРАН 1: НАСТРОЙКА ИГРОКОВ -->
+    <div id="setup-screen" class="screen active">
+        <h1>Шпион</h1>
+        <p class="subtitle">Игра для компании</p>
+
+        <div class="form-group">
+            <label>Добавить игрока</label>
+            <div class="input-row">
+                <input type="text" id="player-input" placeholder="Имя игрока..." autocomplete="off">
+                <button class="btn-icon" id="add-btn">＋</button>
+            </div>
+        </div>
+
+        <div class="players-list" id="players-list">
+            <!-- Список игроков будет добавляться динамически -->
+        </div>
+
+        <div class="settings-row">
+            <label style="margin:0">Количество шпионов</label>
+            <select id="spy-count" style="width: 80px; padding: 8px;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+            </select>
+        </div>
+
+        <button class="btn-primary" id="start-game-btn">Начать игру</button>
+    </div>
+
+    <!-- ЭКРАН 2: ПЕРЕДАЧА ТЕЛЕФОНА -->
+    <div id="pass-screen" class="screen">
+        <h1>Передача хода</h1>
+        <div class="pass-card">
+            <h2>Передайте телефон игроку:</h2>
+            <p id="current-player-name" style="font-size: 1.5rem; font-weight: bold; color: var(--primary);"></p>
+        </div>
+        <button class="btn-primary" id="show-role-btn">Посмотреть роль</button>
+    </div>
+
+    <!-- ЭКРАН 3: ПРОСМОТР РОЛИ -->
+    <div id="role-screen" class="screen">
+        <h1>Ваша роль</h1>
+        <div class="role-box">
+            <div class="role-title">Локация / Роль</div>
+            <div id="role-value" class="role-value"></div>
+            <p id="role-desc" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        </div>
+        <button class="btn-primary" id="hide-role-btn">Скрыть и передать дальше</button>
+    </div>
+
+    <!-- ЭКРАН 4: ИГРОВОЙ ТАЙМЕР -->
+    <div id="timer-screen" class="screen">
+        <h1>Время пошло!</h1>
+        <p class="subtitle">Задавайте друг другу вопросы</p>
+        <div class="timer-display" id="timer-display">05:00</div>
+        <div class="btn-group">
+            <button class="btn-primary" id="restart-btn" style="background: var(--border);">В начало</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const locations = [
+        "Банк", "Пляж", "Школа", "Больница", "Ресторан", 
+        "Космолет", "Полиция", "Супермаркет", "Пять звезд отель", 
+        "Киностудия", "Пиратский корабль", "Поезд"
+    ];
+
+    let players = [];
+    let spyCountInput = document.getElementById('spy-count');
+    let currentPlayerIndex = 0;
+    let rolesAssigned = [];
+    let gameTimer = null;
+
+    // DOM Элементы
+    const setupScreen = document.getElementById('setup-screen');
+    const passScreen = document.getElementById('pass-screen');
+    const roleScreen = document.getElementById('role-screen');
+    const timerScreen = document.getElementById('timer-screen');
+
+    const playerInput = document.getElementById('player-input');
+    const addBtn = document.getElementById('add-btn');
+    const playersList = document.getElementById('players-list');
+    const startGameBtn = document.getElementById('start-game-btn');
+
+    const currentPlayerName = document.getElementById('current-player-name');
+    const showRoleBtn = document.getElementById('show-role-btn');
+    const roleValue = document.getElementById('role-value');
+    const roleDesc = document.getElementById('role-desc');
+    const hideRoleBtn = document.getElementById('hide-role-btn');
+    const timerDisplay = document.getElementById('timer-display');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // Добавление игрока
+    function addPlayer() {
+        const name = playerInput.value.trim();
+        if (name && !players.includes(name)) {
+            players.push(name);
+            playerInput.value = '';
+            renderPlayers();
+        }
     }
-  }
 
-  void _startGame() {
-    if (_players.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Нужно минимум 3 игрока!')),
-      );
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => GameScreen(players: _players, spyCount: _spyCount),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Шпион — Создание игры')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Имя игрока',
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: _addPlayer,
-                ),
-              ),
-              onSubmitted: (_) => _addPlayer(),
-            ),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _players.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text('${index + 1}. ${_players[index]}'),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _players.removeAt(index);
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _startGame,
-              child: Text('Начать игру'),
-              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// 2. Экран передачи телефона и просмотра ролей
-class GameScreen extends StatefulWidget {
-  final List<String> players;
-  final int spyCount;
-
-  GameScreen({required this.players, required this.spyCount});
-
-  @override
-  _GameScreenState createState() => _GameScreenState();
-}
-
-class _GameScreenState extends State<GameScreen> {
-  int currentIndex = 0;
-  bool showRole = false;
-  late List<String> roles;
-
-  final List<String> locations = ['Банк', 'Пляж', 'Школа', 'Больница', 'Ресторан', 'Космолет'];
-
-  @override
-  void initState() {
-    super.initState();
-    _generateRoles();
-  }
-
-  void _generateRoles() {
-    String secretLocation = locations[Random().nextInt(locations.length)];
-    roles = List.filled(widget.players.length, secretLocation);
-
-    // Случайным образом назначаем шпионов
-    var random = Random();
-    int assignedSpies = 0;
-    while (assignedSpies < widget.spyCount) {
-      int index = random.nextInt(widget.players.length);
-      if (roles[index] != 'Шпион') {
-        roles[index] = 'Шпион';
-        assignedSpies++;
-      }
-    }
-  }
-
-  void _nextPlayer() {
-    setState(() {
-      showRole = false;
-      currentIndex++;
+    addBtn.addEventListener('click', addPlayer);
+    playerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addPlayer();
     });
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    if (currentIndex >= widget.players.length) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Игра началась!')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Все роли разданы!', style: TextStyle(fontSize: 24)),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('В начало'),
-              ),
-            ],
-          ),
-        ),
-      );
+    function renderPlayers() {
+        playersList.innerHTML = '';
+        players.forEach((player, index) => {
+            const item = document.createElement('div');
+            item.className = 'player-item';
+            item.innerHTML = `
+                <span class="player-name">${index + 1}. ${player}</span>
+                <button class="btn-danger" onclick="removePlayer(${index})">Удалить</button>
+            `;
+            playersList.appendChild(item);
+        });
     }
 
-    return Scaffold(
-      appBar: AppBar(title: Text('Игрок: ${widget.players[currentIndex]}')),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (!showRole) ...[
-                Text(
-                  'Передайте телефон игроку:\n\n${widget.players[currentIndex]}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22),
-                ),
-                SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () => setState(() => showRole = true),
-                  child: Text('Посмотреть роль'),
-                  style: ElevatedButton.styleFrom(minimumSize: Size(200, 50)),
-                ),
-              ] else ...[
-                Text(
-                  'Ваша роль:',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  roles[currentIndex],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: roles[currentIndex] == 'Шпион' ? Colors.red : Colors.green,
-                  ),
-                ),
-                SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: _nextPlayer,
-                  child: Text('Скрыть и передать дальше'),
-                  style: ElevatedButton.styleFrom(minimumSize: Size(200, 50)),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-        
+    window.removePlayer = function(index) {
+        players.splice(index, 1);
+        renderPlayers();
+    }
+
+    // Старт игры
+    startGameBtn.addEventListener('click', () => {
+        if (players.length < 3) {
+            alert('Нужно минимум 3 игрока!');
+            return;
+        }
+
+        const spiesNum = parseInt(spyCountInput.value);
+        if (spiesNum >= players.length) {
+            alert('Шпионов не может быть больше или равно числу игроков!');
+            return;
+        }
+
+        generateRoles(spiesNum);
+        currentPlayerIndex = 0;
+        showPassScreen();
+    });
+
+    function generateRoles(numSpies) {
+        const secretLocation = locations[Math.floor(Math.random() * locations.length)];
+        rolesAssigned = new Array(players.length).fill(secretLocation);
+
+        let assigned = 0;
+        while (assigned < numSpies) {
+            let randomIndex = Math.floor(Math.random() * players.length);
+            if (rolesAssigned[randomIndex] !== 'Шпион') {
+                rolesAssigned[randomIndex] = 'Шпион';
+                assigned++;
+            }
+        }
+    }
+
+    function switchScreen(screen) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        screen.classList.add('active');
+    }
+
+    function showPassScreen() {
+        if (currentPlayerIndex >= players.length) {
+            startTimerScreen();
+            return;
+        }
+        currentPlayerName.textContent = players[currentPlayerIndex];
+        switchScreen(passScreen);
+    }
+
+    showRoleBtn.addEventListener('click', () => {
+        const role = rolesAssigned[currentPlayerIndex];
+        if (role === 'Шпион') {
+            roleValue.textContent = 'ШПИОН';
+            roleValue.className = 'role-value spy';
+            roleDesc.textContent = 'Вы не знаете локацию. Попытайтесь не выдать себя!';
+        } else {
+            roleValue.textContent = role;
+            roleValue.className = 'role-value citizen';
+            roleDesc.textContent = 'Локация засекречена. Найдите шпиона среди игроков.';
+        }
+        switchScreen(roleScreen);
+    });
+
+    hideRoleBtn.addEventListener('click', () => {
+        currentPlayerIndex++;
+        showPassScreen();
+    });
+
+    // Таймер игры
+    function startTimerScreen() {
+        switchScreen(timerScreen);
+        let timeLeft = 300; // 5 минут
+        updateTimerText(timeLeft);
+
+        if (gameTimer) clearInterval(gameTimer);
+        gameTimer = setInterval(() => {
+            timeLeft--;
+            updateTimerText(timeLeft);
+            if (timeLeft <= 0) {
+                clearInterval(gameTimer);
+                alert('Время вышло! Пора голосовать.');
+            }
+        }, 1000);
+    }
+
+    function updateTimerText(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${m}:${s}`;
+    }
+
+    restartBtn.addEventListener('click', () => {
+        if (gameTimer) clearInterval(gameTimer);
+        players = [];
+        renderPlayers();
+        switchScreen(setupScreen);
+    });
+</script>
+
+</body>
+</html>
