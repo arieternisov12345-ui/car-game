@@ -3,166 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Fight 2D Стиль</title>
+    <title>Дурак Карта Оюну</title>
     <style>
         body {
             margin: 0;
-            background: #111;
+            background: #0d3b22;
             color: white;
             font-family: Arial, sans-serif;
             text-align: center;
-            overflow: hidden;
+            padding: 10px;
         }
-        canvas {
-            background: linear-gradient(to bottom, #222, #000);
-            display: block;
-            margin: 10px auto;
-            border: 2px solid #444;
+        h2 { margin: 5px 0; font-size: 18px; }
+        .game-info {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
-        .ui {
-            font-size: 16px;
-            margin: 5px;
+        .table-area {
+            height: 140px;
+            border: 2px dashed #4e8d64;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.1);
+            position: relative;
         }
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap;
+            min-height: 80px;
+            margin: 5px 0;
+        }
+        .card {
+            width: 50px;
+            height: 75px;
+            background: white;
+            color: black;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+        .card.red { color: #d00; }
         .controls {
+            margin-top: 10px;
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 5px;
         }
         button {
-            padding: 12px 20px;
-            font-size: 16px;
-            background: #444;
-            border: 1px solid #777;
+            padding: 10px 15px;
+            font-size: 14px;
+            background: #ff9800;
+            border: none;
             color: white;
             border-radius: 5px;
-            touch-action: manipulation;
+            font-weight: bold;
+            cursor: pointer;
         }
-        button:active {
-            background: #ff5722;
-        }
+        button:active { background: #e68900; }
     </style>
 </head>
 <body>
 
-    <div class="ui">
-        Жашооңуз: <span id="playerHp" style="color: #00ff00;">100</span> | Душман: <span id="enemyHp" style="color: #ff0000;">100</span>
+    <h2>🃏 Дурак Оюну</h2>
+    
+    <div class="game-info">
+        Калыптагы карттар: <span id="deckCount">36</span> | Козырь: <span id="trumpCard" style="font-weight: bold; color: gold;">-</span>
     </div>
 
-    <canvas id="gameCanvas" width="360" height="300"></canvas>
+    <div>
+        <strong>Компьютердин карттары:</strong> <span id="aiCount">6</span> дан
+    </div>
+
+    <!-- Стол (Ойнолуп жаткан жери) -->
+    <div class="table-area" id="tableArea">
+        <span style="color: #aaa; font-size: 13px;">Стол бош</span>
+    </div>
+
+    <div><strong>Сиздин колуңуз:</strong></div>
+    <div class="hand" id="playerHand"></div>
 
     <div class="controls">
-        <button onclick="playerAttack()">УРУУ 👊</button>
-        <button onclick="playerKick()">ТЕПКҮҮ 🦵</button>
-    </div>
-    <div class="controls" style="margin-top: 8px;">
-        <button onclick="movePlayer(-20)">⬅️ Жылүү</button>
-        <button onclick="movePlayer(20)">Жылүү ➡️</button>
+        <button onclick="takeCards()">АЛУУ</button>
+        <button onclick="bitoCards()">БИТО (Өткөрүү)</button>
     </div>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
+        const suits = ['♥', '♦', '♣', '♠'];
+        const values = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const rankValues = {'6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14};
 
-        let player = { x: 80, y: 210, width: 30, height: 70, hp: 100 };
-        let enemy = { x: 260, y: 210, width: 30, height: 70, hp: 100 };
-        let gameState = "Оюн жүрүүдө...";
+        let deck = [];
+        let playerHand = [];
+        let aiHand = [];
+        let table = []; // [{attack: card, defense: card or null}]
+        let trump = '';
+        let isPlayerTurn = true; // Сиздин чабуул же коргонуу кезек
 
-        function draw() {
-            // Фонду тазалоо (Арена)
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function initGame() {
+            deck = [];
+            for(let s of suits) {
+                for(let v of values) {
+                    deck.push({val: v, suit: s, red: (s === '♥' || s === '♦')});
+                }
+            }
+            // Карттарды аралаштыруу
+            deck.sort(() => Math.random() - 0.5);
 
-            // Жер сызыгы
-            ctx.strokeStyle = "#555";
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(0, 280);
-            ctx.lineTo(canvas.width, 280);
-            ctx.stroke();
+            // Козырь аныктоо (акыркы карт)
+            trump = deck[deck.length - 1].suit;
+            document.getElementById("trumpCard").innerText = trump + " (" + deck[deck.length - 1].val + ")";
 
-            // Оюнчу (Кара көлөкө стили - Shadow style)
-            ctx.fillStyle = "#fff";
-            // Башы
-            ctx.beginPath();
-            ctx.arc(player.x + 15, player.y - 10, 10, 0, Math.PI * 2);
-            ctx.fill();
-            // Денеси жана буттары
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            playerHand = [];
+            aiHand = [];
 
-            // Душман (Кызыл көлөкө стили)
-            ctx.fillStyle = "#ff4444";
-            ctx.beginPath();
-            ctx.arc(enemy.x + 15, enemy.y - 10, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            // 6 дан карт таратуу
+            for(let i=0; i<6; i++) {
+                playerHand.push(deck.pop());
+                aiHand.push(deck.pop());
+            }
 
-            // Статус жазуу
-            ctx.fillStyle = "yellow";
-            ctx.font = "14px Arial";
-            ctx.fillText(gameState, 120, 30);
+            updateUI();
         }
 
-        function movePlayer(step) {
-            player.x += step;
-            if (player.x < 10) player.x = 10;
-            if (player.x > enemy.x - 30) player.x = enemy.x - 30;
-            draw();
-        }
+        function updateUI() {
+            document.getElementById("deckCount").innerText = deck.length;
+            document.getElementById("aiCount").innerText = aiHand.length;
 
-        function playerAttack() {
-            if (player.hp <= 0 || enemy.hp <= 0) return;
+            // Колдогу карттарды чыгаруу
+            let pHardDiv = document.getElementById("playerHand5") || document.getElementById("playerHand");
+            pHardDiv.innerHTML = "";
+            playerHand.forEach((card, index) => {
+                let cardEl = document.createElement("div");
+                cardEl.className = "card " + (card.red ? "red" : "");
+                cardEl.innerHTML = `<span>${card.val}</span><span style="text-align:center; font-size:18px;">${card.suit}</span><span style="text-align:right;">${card.val}</span>`;
+                cardEl.onclick = () => playCard(index);
+                pHardDiv.appendChild(cardEl);
+            });
 
-            // Кол жетсе сокку тийет
-            if (Math.abs(player.x - enemy.x) < 55) {
-                enemy.hp -= 10;
-                document.getElementById("enemyHp").innerText = enemy.hp;
-                gameState = "Сокку тийди! (-10)";
+            // Столду жаңыртуу
+            let tableDiv = document.getElementById("tableArea");
+            tableDiv.innerHTML = "";
+            if(table.length === 0) {
+                tableDiv.innerHTML = '<span style="color: #aaa; font-size: 13px;">Стол бош</span>';
             } else {
-                gameState = "Алыссыз! Жакын келиңиз.";
-            }
+                table.forEach(pair => {
+                    let pairDiv = document.createElement("div");
+                    pairDiv.style.display = "flex";
+                    pairDiv.style.gap = "5px";
 
-            checkWin();
-            draw();
-            setTimeout(enemyTurn, 600);
+                    // Чабуул картасы
+                    let attEl = document.createElement("div");
+                    attEl.className = "card " + (pair.attack.red ? "red" : "");
+                    attEl.innerHTML = `<span>${pair.attack.val}</span><span style="text-align:center; font-size:18px;">${pair.attack.suit}</span><span style="text-align:right;">${pair.attack.val}</span>`;
+                    pairDiv.appendChild(attEl);
+
+                    // Коргонуу картасы (бар болсо)
+                    if(pair.defense) {
+                        let defEl = document.createElement("div");
+                        defEl.className = "card " + (pair.defense.red ? "red" : "");
+                        defEl.innerHTML = `<span>${pair.defense.val}</span><span style="text-align:center; font-size:18px;">${pair.defense.suit}</span><span style="text-align:right;">${pair.defense.val}</span>`;
+                        pairDiv.appendChild(defEl);
+                    }
+                    tableDiv.appendChild(pairDiv);
+                });
+            }
         }
 
-        function playerKick() {
-            if (player.hp <= 0 || enemy.hp <= 0) return;
+        function playCard(index) {
+            let card = playerHand[index];
 
-            if (Math.abs(player.x - enemy.x) < 55) {
-                enemy.hp -= 18;
-                document.getElementById("enemyHp").innerText = Math.max(0, enemy.hp);
-                gameState = "Күчтүү тепки! (-18)";
+            if(isPlayerTurn) {
+                // Сиз чабуул жасап жатасыз
+                if(table.length > 0) {
+                    // Столдогу карттардын маанилери бар экендигин текшерүү (докидывать)
+                    let allowed = table.some(p => p.attack.val === card.val || (p.defense && p.defense.val === card.val));
+                    if(!allowed) {
+                        alert("Бул картты таштоого болбойт!");
+                        return;
+                    }
+                }
+                table.push({attack: card, defense: null});
+                playerHand.splice(index, 1);
+                updateUI();
+                
+                // Компьютердин коргонуусу
+                setTimeout(aiDefend, 600);
+
             } else {
-                gameState = "Тепки жетпеди!";
+                // Сиз коргонуп жатасыз (душмандын картасын басышыңыз керек)
+                let un-defended = table.find(p => p.defense === null);
+                if(un-defended) {
+                    let attCard = un-defended.attack;
+                    // Уруу шарттары: бир масти жогору же козырь менен жабуу
+                    let canBeat = (card.suit === attCard.suit && rankValues[card.val] > rankValues[attCard.val]) || 
+                                  (card.suit === trump && attCard.suit !== trump);
+
+                    if(canBeat) {
+                        un-defended.defense = card;
+                        playerHand.splice(index, 1);
+                        updateUI();
+                        
+                        // Бардык карттар жабылса, компьютердин кийинки кадамы
+                        if(table.every(p => p.defense !== null)) {
+                            setTimeout(() => {
+                                alert("Карттар битого кетти!");
+                                table = [];
+                                refillHands();
+                                isPlayerTurn = true;
+                                aiAttack();
+                            }, 800);
+                        }
+                    } else {
+                        alert("Бул карт менен жаба албайсыз!");
+                    }
+                }
             }
-
-            checkWin();
-            draw();
-            setTimeout(enemyTurn, 600);
         }
 
-        function enemyTurn() {
-            if (enemy.hp <= 0) return;
-            
-            // Душмандын жооп соккусу
-            player.hp -= 10;
-            document.getElementById("playerHp").innerText = Math.max(0, player.hp);
-            gameState = "Душман сокку урду! (-10)";
+        function aiDefend() {
+            let un-defended = table.find(p => p.defense === null);
+            if(!un-defended) return;
 
-            checkWin();
-            draw();
-        }
+            let attCard = un-defended.attack;
+            // Компьютер колунан ылайыктуу карт издейт
+            let bestIndex = aiHand.findIndex(c => 
+                (c.suit === attCard.suit && rankValues[c.val] > rankValues[attCard.val]) || 
+                (c.suit === trump && attCard.suit !== trump)
+            );
 
-        function checkWin() {
-            if (enemy.hp <= 0) {
-                gameState = "Сиз жеңдиниз! 🎉";
-            } else if (player.hp <= 0) {
-                gameState = "Жеңилдиңиз! 😢";
+            if(bestIndex !== -1) {
+                let defCard = aiHand.splice(bestIndex, 1)[0];
+                un-defended.defense = defCard;
+                updateUI();
+            } else {
+                // Компьютер ала албай калды (берет)
+                alert("Компьютер карттарды алды!");
+                table.forEach(p => {
+                    aiHand.push(p.attack);
+                    if(p.defense) aiHand.push(p.defense);
+                });
+                table = [];
+                refillHands();
+                updateUI();
+                isPlayerTurn = true; // Кайрадан сизге чабуул кезеги келет
             }
         }
 
-        draw();
+        function aiAttack() {
+            if(aiHand.length === 0 || deck.length === 0 && playerHand.length === 0) return;
+            let card = aiHand.pop();
+            table.push({attack: card, defense: null});
+            isPlayerTurn = false; // Эми сиз коргоносуз
+            updateUI();
+            alert("Компьютер чабуул жасады! Карт менен жабыңыз.");
+        }
+
+        function takeCards() {
+            if(isPlayerTurn) {
+                alert("Сиз чабуул кылып жатасыз, алууга болбойт!");
+                return;
+            }
+            // Сиз столдогу карттарды аласыз
+            table.forEach(p => {
+                playerHand.push(p.attack);
+                if(p.defense) playerHand.push(p.defense);
+            });
+            table = [];
+            refillHands();
+            isPlayerTurn = true;
+            updateUI();
+            alert("Сиз карттарды алдыныз. Эми компьютер чабуул жасайт.");
+            setTimeout(aiAttack, 800);
+        }
+
+        function bitoCards() {
+            if(!isPlayerTurn && table.every(p => p.defense !== null)) {
+                table = [];
+                refillHands();
+                isPlayerTurn = true;
+                updateUI();
+                aiAttack();
+            } else if(isPlayerTurn && table.length > 0) {
+                // Чабуулду токтотуу
+                table = [];
+                refillHands();
+                updateUI();
+                setTimeout(aiAttack, 600);
+            } else {
+                alert("Азыр бито кыла албайсыз!");
+            }
+        }
+
+        function refillHands() {
+            while(playerHand.length < 6 && deck.length > 0) {
+                playerHand.push(deck.pop());
+            }
+            while(aiHand.length < 6 && deck.length > 0) {
+                aiHand.push(deck.pop());
+            }
+        }
+
+        // Оюнду баштап жиберүү
+        initGame();
+        // Биринчи болуп компьютер чабуул жасайын
+        setTimeout(aiAttack, 1000);
     </script>
 </body>
 </html>
