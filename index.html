@@ -1,327 +1,223 @@
-<!DOCTYPE html>
-<html lang="ky">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Дурак Карта Оюну</title>
-    <style>
-        body {
-            margin: 0;
-            background: #0d3b22;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 10px;
-        }
-        h2 { margin: 5px 0; font-size: 18px; }
-        .game-info {
-            background: rgba(0,0,0,0.3);
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .table-area {
-            height: 140px;
-            border: 2px dashed #4e8d64;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-            background: rgba(0,0,0,0.1);
-            position: relative;
-        }
-        .hand {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            flex-wrap: wrap;
-            min-height: 80px;
-            margin: 5px 0;
-        }
-        .card {
-            width: 50px;
-            height: 75px;
-            background: white;
-            color: black;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 4px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-            user-select: none;
-        }
-        .card.red { color: #d00; }
-        .controls {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 14px;
-            background: #ff9800;
-            border: none;
-            color: white;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button:active { background: #e68900; }
-    </style>
-</head>
-<body>
+import 'package:flutter/material.dart';
+import 'dart:math';
 
-    <h2>🃏 Дурак Оюну</h2>
-    
-    <div class="game-info">
-        Калыптагы карттар: <span id="deckCount">36</span> | Козырь: <span id="trumpCard" style="font-weight: bold; color: gold;">-</span>
-    </div>
+void main() {
+  runApp(MyApp());
+}
 
-    <div>
-        <strong>Компьютердин карттары:</strong> <span id="aiCount">6</span> дан
-    </div>
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Шпион',
+      theme: ThemeData.dark(),
+      home: SetupScreen(),
+    );
+  }
+}
 
-    <!-- Стол (Ойнолуп жаткан жери) -->
-    <div class="table-area" id="tableArea">
-        <span style="color: #aaa; font-size: 13px;">Стол бош</span>
-    </div>
+// 1. Экран настройки игроков
+class SetupScreen extends StatefulWidget {
+  @override
+  _SetupScreenState createState() => _SetupScreenState();
+}
 
-    <div><strong>Сиздин колуңуз:</strong></div>
-    <div class="hand" id="playerHand"></div>
+class _SetupScreenState extends State<SetupScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final List<String> _players = [];
+  int _spyCount = 1;
 
-    <div class="controls">
-        <button onclick="takeCards()">АЛУУ</button>
-        <button onclick="bitoCards()">БИТО (Өткөрүү)</button>
-    </div>
+  void _addPlayer() {
+    if (_nameController.text.trim().isNotEmpty) {
+      setState(() {
+        _players.add(_nameController.text.trim());
+        _nameController.clear();
+      });
+    }
+  }
 
-    <script>
-        const suits = ['♥', '♦', '♣', '♠'];
-        const values = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const rankValues = {'6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14};
+  void _startGame() {
+    if (_players.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Нужно минимум 3 игрока!')),
+      );
+      return;
+    }
 
-        let deck = [];
-        let playerHand = [];
-        let aiHand = [];
-        let table = []; // [{attack: card, defense: card or null}]
-        let trump = '';
-        let isPlayerTurn = true; // Сиздин чабуул же коргонуу кезек
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GameScreen(players: _players, spyCount: _spyCount),
+      ),
+    );
+  }
 
-        function initGame() {
-            deck = [];
-            for(let s of suits) {
-                for(let v of values) {
-                    deck.push({val: v, suit: s, red: (s === '♥' || s === '♦')});
-                }
-            }
-            // Карттарды аралаштыруу
-            deck.sort(() => Math.random() - 0.5);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Шпион — Создание игры')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Имя игрока',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: _addPlayer,
+                ),
+              ),
+              onSubmitted: (_) => _addPlayer(),
+            ),
+            SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _players.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('${index + 1}. ${_players[index]}'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        setState(() {
+                          _players.removeAt(index);
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _startGame,
+              child: Text('Начать игру'),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-            // Козырь аныктоо (акыркы карт)
-            trump = deck[deck.length - 1].suit;
-            document.getElementById("trumpCard").innerText = trump + " (" + deck[deck.length - 1].val + ")";
+// 2. Экран передачи телефона и просмотра ролей
+class GameScreen extends StatefulWidget {
+  final List<String> players;
+  final int spyCount;
 
-            playerHand = [];
-            aiHand = [];
+  GameScreen({required this.players, required this.spyCount});
 
-            // 6 дан карт таратуу
-            for(let i=0; i<6; i++) {
-                playerHand.push(deck.pop());
-                aiHand.push(deck.pop());
-            }
+  @override
+  _GameScreenState createState() => _GameScreenState();
+}
 
-            updateUI();
-        }
+class _GameScreenState extends State<GameScreen> {
+  int currentIndex = 0;
+  bool showRole = false;
+  late List<String> roles;
 
-        function updateUI() {
-            document.getElementById("deckCount").innerText = deck.length;
-            document.getElementById("aiCount").innerText = aiHand.length;
+  final List<String> locations = ['Банк', 'Пляж', 'Школа', 'Больница', 'Ресторан', 'Космолет'];
 
-            // Колдогу карттарды чыгаруу
-            let pHardDiv = document.getElementById("playerHand5") || document.getElementById("playerHand");
-            pHardDiv.innerHTML = "";
-            playerHand.forEach((card, index) => {
-                let cardEl = document.createElement("div");
-                cardEl.className = "card " + (card.red ? "red" : "");
-                cardEl.innerHTML = `<span>${card.val}</span><span style="text-align:center; font-size:18px;">${card.suit}</span><span style="text-align:right;">${card.val}</span>`;
-                cardEl.onclick = () => playCard(index);
-                pHardDiv.appendChild(cardEl);
-            });
+  @override
+  void initState() {
+    super.initState();
+    _generateRoles();
+  }
 
-            // Столду жаңыртуу
-            let tableDiv = document.getElementById("tableArea");
-            tableDiv.innerHTML = "";
-            if(table.length === 0) {
-                tableDiv.innerHTML = '<span style="color: #aaa; font-size: 13px;">Стол бош</span>';
-            } else {
-                table.forEach(pair => {
-                    let pairDiv = document.createElement("div");
-                    pairDiv.style.display = "flex";
-                    pairDiv.style.gap = "5px";
+  void _generateRoles() {
+    String secretLocation = locations[Random().nextInt(locations.length)];
+    roles = List.filled(widget.players.length, secretLocation);
 
-                    // Чабуул картасы
-                    let attEl = document.createElement("div");
-                    attEl.className = "card " + (pair.attack.red ? "red" : "");
-                    attEl.innerHTML = `<span>${pair.attack.val}</span><span style="text-align:center; font-size:18px;">${pair.attack.suit}</span><span style="text-align:right;">${pair.attack.val}</span>`;
-                    pairDiv.appendChild(attEl);
+    // Случайным образом назначаем шпионов
+    var random = Random();
+    int assignedSpies = 0;
+    while (assignedSpies < widget.spyCount) {
+      int index = random.nextInt(widget.players.length);
+      if (roles[index] != 'Шпион') {
+        roles[index] = 'Шпион';
+        assignedSpies++;
+      }
+    }
+  }
 
-                    // Коргонуу картасы (бар болсо)
-                    if(pair.defense) {
-                        let defEl = document.createElement("div");
-                        defEl.className = "card " + (pair.defense.red ? "red" : "");
-                        defEl.innerHTML = `<span>${pair.defense.val}</span><span style="text-align:center; font-size:18px;">${pair.defense.suit}</span><span style="text-align:right;">${pair.defense.val}</span>`;
-                        pairDiv.appendChild(defEl);
-                    }
-                    tableDiv.appendChild(pairDiv);
-                });
-            }
-        }
+  void _nextPlayer() {
+    setState(() {
+      showRole = false;
+      currentIndex++;
+    });
+  }
 
-        function playCard(index) {
-            let card = playerHand[index];
+  @override
+  Widget build(BuildContext context) {
+    if (currentIndex >= widget.players.length) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Игра началась!')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Все роли разданы!', style: TextStyle(fontSize: 24)),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('В начало'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-            if(isPlayerTurn) {
-                // Сиз чабуул жасап жатасыз
-                if(table.length > 0) {
-                    // Столдогу карттардын маанилери бар экендигин текшерүү (докидывать)
-                    let allowed = table.some(p => p.attack.val === card.val || (p.defense && p.defense.val === card.val));
-                    if(!allowed) {
-                        alert("Бул картты таштоого болбойт!");
-                        return;
-                    }
-                }
-                table.push({attack: card, defense: null});
-                playerHand.splice(index, 1);
-                updateUI();
-                
-                // Компьютердин коргонуусу
-                setTimeout(aiDefend, 600);
-
-            } else {
-                // Сиз коргонуп жатасыз (душмандын картасын басышыңыз керек)
-                let un-defended = table.find(p => p.defense === null);
-                if(un-defended) {
-                    let attCard = un-defended.attack;
-                    // Уруу шарттары: бир масти жогору же козырь менен жабуу
-                    let canBeat = (card.suit === attCard.suit && rankValues[card.val] > rankValues[attCard.val]) || 
-                                  (card.suit === trump && attCard.suit !== trump);
-
-                    if(canBeat) {
-                        un-defended.defense = card;
-                        playerHand.splice(index, 1);
-                        updateUI();
-                        
-                        // Бардык карттар жабылса, компьютердин кийинки кадамы
-                        if(table.every(p => p.defense !== null)) {
-                            setTimeout(() => {
-                                alert("Карттар битого кетти!");
-                                table = [];
-                                refillHands();
-                                isPlayerTurn = true;
-                                aiAttack();
-                            }, 800);
-                        }
-                    } else {
-                        alert("Бул карт менен жаба албайсыз!");
-                    }
-                }
-            }
-        }
-
-        function aiDefend() {
-            let un-defended = table.find(p => p.defense === null);
-            if(!un-defended) return;
-
-            let attCard = un-defended.attack;
-            // Компьютер колунан ылайыктуу карт издейт
-            let bestIndex = aiHand.findIndex(c => 
-                (c.suit === attCard.suit && rankValues[c.val] > rankValues[attCard.val]) || 
-                (c.suit === trump && attCard.suit !== trump)
-            );
-
-            if(bestIndex !== -1) {
-                let defCard = aiHand.splice(bestIndex, 1)[0];
-                un-defended.defense = defCard;
-                updateUI();
-            } else {
-                // Компьютер ала албай калды (берет)
-                alert("Компьютер карттарды алды!");
-                table.forEach(p => {
-                    aiHand.push(p.attack);
-                    if(p.defense) aiHand.push(p.defense);
-                });
-                table = [];
-                refillHands();
-                updateUI();
-                isPlayerTurn = true; // Кайрадан сизге чабуул кезеги келет
-            }
-        }
-
-        function aiAttack() {
-            if(aiHand.length === 0 || deck.length === 0 && playerHand.length === 0) return;
-            let card = aiHand.pop();
-            table.push({attack: card, defense: null});
-            isPlayerTurn = false; // Эми сиз коргоносуз
-            updateUI();
-            alert("Компьютер чабуул жасады! Карт менен жабыңыз.");
-        }
-
-        function takeCards() {
-            if(isPlayerTurn) {
-                alert("Сиз чабуул кылып жатасыз, алууга болбойт!");
-                return;
-            }
-            // Сиз столдогу карттарды аласыз
-            table.forEach(p => {
-                playerHand.push(p.attack);
-                if(p.defense) playerHand.push(p.defense);
-            });
-            table = [];
-            refillHands();
-            isPlayerTurn = true;
-            updateUI();
-            alert("Сиз карттарды алдыныз. Эми компьютер чабуул жасайт.");
-            setTimeout(aiAttack, 800);
-        }
-
-        function bitoCards() {
-            if(!isPlayerTurn && table.every(p => p.defense !== null)) {
-                table = [];
-                refillHands();
-                isPlayerTurn = true;
-                updateUI();
-                aiAttack();
-            } else if(isPlayerTurn && table.length > 0) {
-                // Чабуулду токтотуу
-                table = [];
-                refillHands();
-                updateUI();
-                setTimeout(aiAttack, 600);
-            } else {
-                alert("Азыр бито кыла албайсыз!");
-            }
-        }
-
-        function refillHands() {
-            while(playerHand.length < 6 && deck.length > 0) {
-                playerHand.push(deck.pop());
-            }
-            while(aiHand.length < 6 && deck.length > 0) {
-                aiHand.push(deck.pop());
-            }
-        }
-
-        // Оюнду баштап жиберүү
-        initGame();
-        // Биринчи болуп компьютер чабуул жасайын
-        setTimeout(aiAttack, 1000);
-    </script>
-</body>
-</html>
+    return Scaffold(
+      appBar: AppBar(title: Text('Игрок: ${widget.players[currentIndex]}')),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!showRole) ...[
+                Text(
+                  'Передайте телефон игроку:\n\n${widget.players[currentIndex]}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 22),
+                ),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () => setState(() => showRole = true),
+                  child: Text('Посмотреть роль'),
+                  style: ElevatedButton.styleFrom(minimumSize: Size(200, 50)),
+                ),
+              ] else ...[
+                Text(
+                  'Ваша роль:',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  roles[currentIndex],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: roles[currentIndex] == 'Шпион' ? Colors.red : Colors.green,
+                  ),
+                ),
+                SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: _nextPlayer,
+                  child: Text('Скрыть и передать дальше'),
+                  style: ElevatedButton.styleFrom(minimumSize: Size(200, 50)),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+        
