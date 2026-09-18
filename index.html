@@ -1,487 +1,284 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ky">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шпион и Детектив — Игра для компании</title>
+    <title>Шпион — Оюн</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --accent: #ec4899;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
+        body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text);
-            min-height: 100vh;
+            background-color: #121624;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            height: 100vh;
+            color: #ffffff;
         }
 
-        .container {
-            width: 100%;
-            max-width: 420px;
-            background: var(--card-bg);
+        .card {
+            background-color: #1a2238;
+            width: 380px;
+            padding: 30px 25px;
             border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            text-align: center;
         }
 
         h1 {
-            font-size: 1.75rem;
-            text-align: center;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #818cf8, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #a855f7;
+            margin: 0 0 8px 0;
+            font-size: 28px;
         }
 
-        p.subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 24px;
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 25px;
         }
 
-        .screen {
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
-        .screen.active {
-            display: block;
+        input[type="text"] {
+            flex: 1;
+            background-color: #111827;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+        .add-btn {
+            background-color: #6366f1;
+            border: none;
+            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .form-group {
-            margin-bottom: 16px;
+        .select-container {
+            position: relative;
+            margin-bottom: 15px;
+            text-align: left;
         }
 
         label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 12px;
+            color: #94a3b8;
             margin-bottom: 6px;
-            font-weight: 600;
+            display: block;
         }
 
-        input, select {
+        select {
             width: 100%;
-            padding: 12px 16px;
-            background: #0f172a;
-            border: 1px solid var(--border);
+            background-color: #111827;
+            border: 1px solid #2d3748;
             border-radius: 12px;
-            color: var(--text);
-            font-size: 1rem;
+            padding: 14px 16px;
+            color: #ffffff;
+            font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary);
-        }
-
-        .input-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        button {
             cursor: pointer;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 20px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
+        .start-btn {
             width: 100%;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-icon {
-            background: var(--primary);
+            background-color: #6366f1;
+            border: none;
+            border-radius: 14px;
+            padding: 14px;
             color: white;
-            padding: 0 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
         }
 
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            border-radius: 8px;
+        .start-btn:hover, .add-btn:hover {
+            opacity: 0.9;
         }
 
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.3);
-        }
-
+        /* Тизме стили */
         .players-list {
-            max-height: 180px;
+            max-height: 100px;
             overflow-y: auto;
-            margin: 16px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-right: 4px;
-        }
-
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(51, 65, 85, 0.5);
-        }
-
-        .player-name {
-            font-weight: 500;
-        }
-
-        .settings-info {
-            background: rgba(15, 23, 42, 0.6);
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            text-align: center;
-        }
-
-        .pass-card {
-            text-align: center;
-            padding: 30px 10px;
-            background: rgba(15, 23, 42, 0.4);
-            border-radius: 16px;
-            border: 1px dashed var(--border);
-            margin: 20px 0;
-        }
-
-        .pass-card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 13px;
             color: #cbd5e1;
+            background: #111827;
+            padding: 8px 12px;
+            border-radius: 10px;
         }
 
-        .role-box {
-            text-align: center;
-            padding: 30px 16px;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 16px;
-            border: 2px solid var(--primary);
+        /* Оюн экраны */
+        #gameScreen {
+            display: none;
+        }
+
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #f43f5e;
             margin: 20px 0;
         }
 
-        .role-title {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .role-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        .role-value.spy {
-            color: var(--danger);
-        }
-
-        .role-value.detective {
-            color: var(--warning);
-        }
-
-        .role-value.citizen {
-            color: var(--success);
-        }
-
-        .timer-display {
-            font-size: 3rem;
-            font-weight: 800;
-            text-align: center;
-            margin: 20px 0;
-            color: var(--primary);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
+        .result-box {
+            font-size: 18px;
+            color: #38bdf8;
+            margin-top: 15px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- ЭКРАН 1: НАСТРОЙКА ИГРОКОВ -->
-    <div id="setup-screen" class="screen active">
-        <h1>Шпион и Детектив</h1>
-        <p class="subtitle">Игра для компании</p>
+    <div class="card">
+        <!-- Жөндөө экраны -->
+        <div id="setupScreen">
+            <h1>Шпион</h1>
+            <div class="subtitle">Оюн үчүн компания</div>
 
-        <div class="form-group">
-            <label>Добавить игрока</label>
-            <div class="input-row">
-                <input type="text" id="player-input" placeholder="Имя игрока..." autocomplete="off">
-                <button class="btn-icon" id="add-btn">＋</button>
+            <label>Оюнчу кошуу</label>
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Оюнчунун аты...">
+                <button class="add-btn" onclick="addPlayer()">+</button>
             </div>
+
+            <div class="players-list" id="playersList">Кошулган оюнчулар жок</div>
+
+            <div class="select-container">
+                <label>Шпиондордун саны</label>
+                <select id="spyCount">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+
+            <div class="select-container">
+                <label>Оюн убактысы (секунд)</label>
+                <select id="gameTime">
+                    <option value="30">30 секунд</option>
+                    <option value="60">1 мүнөт (60 сек)</option>
+                    <option value="120">2 мүнөт (120 сек)</option>
+                </select>
+            </div>
+
+            <button class="start-btn" onclick="startGame()">Оюнду баштоо</button>
         </div>
 
-        <div class="players-list" id="players-list">
-            <!-- Список игроков -->
-        </div>
+        <!-- Оюн жүрүп жаткан экран (Таймер) -->
+        <div id="gameScreen">
+            <h1>Оюн жүрүүдө...</h1>
+            <div class="subtitle">Талкуу жүрүп жатат, шпионду табыңыз!</div>
+            
+            <div class="timer" id="timerDisplay">00:00</div>
+            
+            <div class="result-box" id="resultBox"></div>
 
-        <div class="settings-info">
-            Роли в игре: <b>1 Шпион</b>, <b>1 Детектив</b> и <b>Мирные жители</b>.
-        </div>
-
-        <button class="btn-primary" id="start-game-btn">Начать игру</button>
-    </div>
-
-    <!-- ЭКРАН 2: ПЕРЕДАЧА ТЕЛЕФОНА -->
-    <div id="pass-screen" class="screen">
-        <h1>Передача хода</h1>
-        <div class="pass-card">
-            <h2>Передайте телефон игроку:</h2>
-            <p id="current-player-name" style="font-size: 1.5rem; font-weight: bold; color: var(--primary);"></p>
-        </div>
-        <button class="btn-primary" id="show-role-btn">Посмотреть роль</button>
-    </div>
-
-    <!-- ЭКРАН 3: ПРОСМОТР РОЛИ -->
-    <div id="role-screen" class="screen">
-        <h1>Ваша роль</h1>
-        <div class="role-box">
-            <div class="role-title">Информация</div>
-            <div id="role-value" class="role-value"></div>
-            <p id="role-desc" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;"></p>
-        </div>
-        <button class="btn-primary" id="hide-role-btn">Скрыть и передать дальше</button>
-    </div>
-
-    <!-- ЭКРАН 4: ИГРОВОЙ ТАЙМЕР -->
-    <div id="timer-screen" class="screen">
-        <h1>Время пошло!</h1>
-        <p class="subtitle">Задавайте друг другу вопросы</p>
-        <div class="timer-display" id="timer-display">05:00</div>
-        <div class="btn-group">
-            <button class="btn-primary" id="restart-btn" style="background: var(--border);">В начало</button>
+            <button class="start-btn" id="restartBtn" style="display:none;" onclick="resetGame()">Жаңы оюн</button>
         </div>
     </div>
-</div>
 
-<script>
-    const locations = [
-        "Банк", "Пляж", "Школа", "Больница", "Ресторан", 
-        "Космолет", "Полиция", "Супермаркет", "Отель 5 звезд", 
-        "Киностудия", "Пиратский корабль", "Поезд"
-    ];
+    <script>
+        let players = [];
+        let spies = [];
+        let timerInterval;
 
-    let players = [];
-    let currentPlayerIndex = 0;
-    let rolesAssigned = [];
-    let gameTimer = null;
-
-    // DOM Элементы
-    const setupScreen = document.getElementById('setup-screen');
-    const passScreen = document.getElementById('pass-screen');
-    const roleScreen = document.getElementById('role-screen');
-    const timerScreen = document.getElementById('timer-screen');
-
-    const playerInput = document.getElementById('player-input');
-    const addBtn = document.getElementById('add-btn');
-    const playersList = document.getElementById('players-list');
-    const startGameBtn = document.getElementById('start-game-btn');
-
-    const currentPlayerName = document.getElementById('current-player-name');
-    const showRoleBtn = document.getElementById('show-role-btn');
-    const roleValue = document.getElementById('role-value');
-    const roleDesc = document.getElementById('role-desc');
-    const hideRoleBtn = document.getElementById('hide-role-btn');
-    const timerDisplay = document.getElementById('timer-display');
-    const restartBtn = document.getElementById('restart-btn');
-
-    // Добавление игрока
-    function addPlayer() {
-        const name = playerInput.value.trim();
-        if (name && !players.includes(name)) {
-            players.push(name);
-            playerInput.value = '';
-            renderPlayers();
-        }
-    }
-
-    addBtn.addEventListener('click', addPlayer);
-    playerInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addPlayer();
-    });
-
-    function renderPlayers() {
-        playersList.innerHTML = '';
-        players.forEach((player, index) => {
-            const item = document.createElement('div');
-            item.className = 'player-item';
-            item.innerHTML = `
-                <span class="player-name">${index + 1}. ${player}</span>
-                <button class="btn-danger" onclick="removePlayer(${index})">Удалить</button>
-            `;
-            playersList.appendChild(item);
-        });
-    }
-
-    window.removePlayer = function(index) {
-        players.splice(index, 1);
-        renderPlayers();
-    }
-
-    // Старт игры (нужно минимум 4 игрока, так как у нас Шпион + Детектив + минимум 2 мирных)
-    startGameBtn.addEventListener('click', () => {
-        if (players.length < 4) {
-            alert('Для игры с Шпионом и Детективом нужно минимум 4 игрока!');
-            return;
-        }
-
-        generateRoles();
-        currentPlayerIndex = 0;
-        showPassScreen();
-    });
-
-    function generateRoles() {
-        const secretLocation = locations[Math.floor(Math.random() * locations.length)];
-        rolesAssigned = new Array(players.length).fill(secretLocation);
-
-        // Назначение 1 шпиона
-        let spyIndex = Math.floor(Math.random() * players.length);
-        rolesAssigned[spyIndex] = 'Шпион';
-
-        // Назначение 1 детектива (ищем другой индекс, чтобы не совпало со шпионом)
-        let detectiveIndex;
-        do {
-            detectiveIndex = Math.floor(Math.random() * players.length);
-        } while (detectiveIndex === spyIndex);
-
-        rolesAssigned[detectiveIndex] = 'Детектив';
-    }
-
-    function switchScreen(screen) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        screen.classList.add('active');
-    }
-
-    function showPassScreen() {
-        if (currentPlayerIndex >= players.length) {
-            startTimerScreen();
-            return;
-        }
-        currentPlayerName.textContent = players[currentPlayerIndex];
-        switchScreen(passScreen);
-    }
-
-    showRoleBtn.addEventListener('click', () => {
-        const role = rolesAssigned[currentPlayerIndex];
-        
-        if (role === 'Шпион') {
-            roleValue.textContent = 'ШПИОН';
-            roleValue.className = 'role-value spy';
-            roleDesc.textContent = 'Вы не знаете локацию. Попытайтесь не выдать себя и угадать её!';
-        } else if (role === 'Детектив') {
-            roleValue.textContent = 'ДЕТЕКТИВ';
-            roleValue.className = 'role-value detective';
-            roleDesc.textContent = 'Вы знаете локацию, но ваша цель — внимательно следить за игроками и вычислить Шпиона.';
-        } else {
-            roleValue.textContent = role;
-            roleValue.className = 'role-value citizen';
-            roleDesc.textContent = 'Локация засекречена. Задавайте вопросы и найдите шпиона.';
-        }
-        switchScreen(roleScreen);
-    });
-
-    hideRoleBtn.addEventListener('click', () => {
-        currentPlayerIndex++;
-        showPassScreen();
-    });
-
-    // Таймер игры
-    function startTimerScreen() {
-        switchScreen(timerScreen);
-        let timeLeft = 300; // 5 минут
-        updateTimerText(timeLeft);
-
-        if (gameTimer) clearInterval(gameTimer);
-        gameTimer = setInterval(() => {
-            timeLeft--;
-            updateTimerText(timeLeft);
-            if (timeLeft <= 0) {
-                clearInterval(gameTimer);
-                alert('Время вышло! Пора голосовать.');
+        function addPlayer() {
+            const input = document.getElementById('playerName');
+            const name = input.value.trim();
+            if (name !== "" && !players.includes(name)) {
+                players.push(name);
+                updatePlayersList();
+                input.value = "";
             }
-        }, 1000);
-    }
+        }
 
-    function updateTimerText(seconds) {
-        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
-        timerDisplay.textContent = `${m}:${s}`;
-    }
+        function updatePlayersList() {
+            const listDiv = document.getElementById('playersList');
+            if (players.length === 0) {
+                listDiv.innerHTML = "Кошулган оюнчулар жок";
+            } else {
+                listDiv.innerHTML = players.join(', ');
+            }
+        }
 
-    restartBtn.addEventListener('click', () => {
-        if (gameTimer) clearInterval(gameTimer);
-        players = [];
-        renderPlayers();
-        switchScreen(setupScreen);
-    });
-</script>
+        function startGame() {
+            if (players.length < 3) {
+                alert("Оюн үчүн кеминде 3 оюнчу керек!");
+                return;
+            }
+
+            // Экранды алмаштыруу
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+
+            // Шпиондорду кокустан тандоо
+            let spyNumber = parseInt(document.getElementById('spyCount').value);
+            if (spyNumber >= players.length) spyNumber = 1;
+            
+            spies = [];
+            let playersCopy = [...players];
+            for (let i = 0; i < spyNumber; i++) {
+                let randomIndex = Math.floor(Math.random() * playersCopy.length);
+                spies.push(playersCopy.splice(randomIndex, 1)[0]);
+            }
+
+            // Таймерди баштоо
+            let timeLeft = parseInt(document.getElementById('gameTime').value);
+            updateTimerDisplay(timeLeft);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            let mins = Math.floor(seconds / 60);
+            let secs = seconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+        }
+
+        function endGame() {
+            document.getElementById('timerDisplay').innerText = "Убакыт бүттү!";
+            const resultBox = document.getElementById('resultBox');
+            
+            // Убакыт бүткөндө шпиондорду көрсөтүү
+            resultBox.innerHTML = `Шпион(дор) болгон: <span style="color: #f43f5e;">${spies.join(', ')}</span>`;
+            document.getElementById('restartBtn').style.display = 'block';
+        }
+
+        function resetGame() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('setupScreen').style.display = 'block';
+            document.getElementById('restartBtn').style.display = 'none';
+            document.getElementById('resultBox').innerHTML = "";
+            players = [];
+            updatePlayersList();
+        }
+    </script>
 
 </body>
-</html>        
+</html>
