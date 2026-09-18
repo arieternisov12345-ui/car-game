@@ -1,70 +1,179 @@
-const playerCars = new Map();
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1D Машина жарышы</title>
 
-mp.events.addCommand("car", (player, fullText) => {
-    // Мисал: /car sultan
-    const model = fullText && fullText.trim()
-        ? fullText.trim()
-        : "sultan";
-
-    // Эски машинаны өчүрүү
-    const oldCar = playerCars.get(player.id);
-
-    if (oldCar && mp.vehicles.exists(oldCar)) {
-        oldCar.destroy();
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
     }
 
-    // Оюнчунун алдына чыгаруу
-    const pos = player.position;
-
-    const vehicle = mp.vehicles.new(
-        mp.joaat(model),
-        new mp.Vector3(
-            pos.x + 3,
-            pos.y,
-            pos.z
-        ),
-        {
-            heading: player.heading,
-            numberPlate: "RPRP"
-        }
-    );
-
-    playerCars.set(player.id, vehicle);
-
-    // Машинага отургузуу
-    player.putIntoVehicle(vehicle, 0);
-
-    player.outputChatBox(
-        `!{00FF00}Машина чыгарылды: ${model}`
-    );
-});
-
-// Машинаны өчүрүү
-mp.events.addCommand("delcar", (player) => {
-    const vehicle = playerCars.get(player.id);
-
-    if (!vehicle || !mp.vehicles.exists(vehicle)) {
-        player.outputChatBox(
-            "!{FF0000}Сенде машина жок."
-        );
-        return;
+    h1 {
+      margin-top: 30px;
+      color: #00ff88;
     }
 
-    vehicle.destroy();
-    playerCars.delete(player.id);
-
-    player.outputChatBox(
-        "!{00FF00}Машина өчүрүлдү."
-    );
-});
-
-// Оюнчу чыкканда машинаны өчүрүү
-mp.events.add("playerQuit", (player) => {
-    const vehicle = playerCars.get(player.id);
-
-    if (vehicle && mp.vehicles.exists(vehicle)) {
-        vehicle.destroy();
+    .track {
+      width: 90%;
+      max-width: 700px;
+      margin: 30px auto;
+      background: #333;
+      border: 4px solid white;
+      border-radius: 10px;
+      padding: 20px 0;
     }
 
-    playerCars.delete(player.id);
-});
+    .lane {
+      position: relative;
+      height: 70px;
+      border-bottom: 3px dashed #aaa;
+      margin-bottom: 15px;
+    }
+
+    .lane:last-child {
+      border-bottom: none;
+    }
+
+    .car {
+      position: absolute;
+      left: 0;
+      top: 15px;
+      font-size: 40px;
+      transition: left 0.15s linear;
+    }
+
+    .finish {
+      position: absolute;
+      right: 10px;
+      top: 0;
+      height: 100%;
+      border-left: 5px solid red;
+    }
+
+    button {
+      font-size: 24px;
+      padding: 15px 35px;
+      margin: 10px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      color: white;
+      background: #00aaff;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    #message {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 20px;
+      min-height: 40px;
+    }
+
+    #restart {
+      background: #ff4444;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🏁 1D МАШИНА ЖАРЫШЫ 🏁</h1>
+
+  <div class="track">
+
+    <div class="lane">
+      <div id="car1" class="car">🚗</div>
+      <div class="finish"></div>
+    </div>
+
+    <div class="lane">
+      <div id="car2" class="car">🏎️</div>
+      <div class="finish"></div>
+    </div>
+
+  </div>
+
+  <div id="message">Даярсыңбы? 🚦</div>
+
+  <button onclick="startRace()">🚀 ГАЗ!</button>
+  <button id="restart" onclick="restartGame()">🔄 КАЙРА</button>
+
+  <script>
+
+    let car1Position = 0;
+    let car2Position = 0;
+    let raceStarted = false;
+    let winner = false;
+
+    const car1 = document.getElementById("car1");
+    const car2 = document.getElementById("car2");
+    const message = document.getElementById("message");
+
+    function startRace() {
+
+      if (winner) return;
+
+      raceStarted = true;
+
+      // Сенин машинаң
+      car1Position += Math.random() * 8 + 3;
+
+      // Компьютердин машинасы
+      car2Position += Math.random() * 7 + 2;
+
+      if (car1Position > 88) {
+        car1Position = 88;
+      }
+
+      if (car2Position > 88) {
+        car2Position = 88;
+      }
+
+      car1.style.left = car1Position + "%";
+      car2.style.left = car2Position + "%";
+
+      if (car1Position >= 88) {
+        winner = true;
+        message.innerHTML = "🏆 СЕН ЖЕҢДИҢ! 🚗💨";
+        message.style.color = "#00ff88";
+      }
+
+      else if (car2Position >= 88) {
+        winner = true;
+        message.innerHTML = "😢 КОМПЬЮТЕР ЖЕҢДИ!";
+        message.style.color = "#ff4444";
+      }
+
+      else {
+        message.innerHTML = "🔥 Жарыш уланууда!";
+        message.style.color = "white";
+      }
+    }
+
+    function restartGame() {
+
+      car1Position = 0;
+      car2Position = 0;
+      raceStarted = false;
+      winner = false;
+
+      car1.style.left = "0%";
+      car2.style.left = "0%";
+
+      message.innerHTML = "Даярсыңбы? 🚦";
+      message.style.color = "white";
+    }
+
+  </script>
+
+</body>
+</html>
